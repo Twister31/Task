@@ -2,15 +2,17 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/gorilla/mux"
 	"net/http"
+	"strconv"
 )
 
 func postTask(w http.ResponseWriter, r *http.Request) {
 	var task = Task{}
 	json.NewDecoder(r.Body).Decode(&task)
 	DB.Create(&task)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(task)
 }
 
 func getTask(w http.ResponseWriter, r *http.Request) {
@@ -22,18 +24,33 @@ func getTask(w http.ResponseWriter, r *http.Request) {
 
 func putTask(w http.ResponseWriter, r *http.Request) {
 	var task Task
+	var id = mux.Vars(r)["id"]
 	json.NewDecoder(r.Body).Decode(&task)
-	DB.Model(&task).Updates(task)
+
+	ID, err := strconv.Atoi(id)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return
+	}
+
+	DB.Model(&task).Where("id = ?", ID).Updates(task)
+
+	DB.First(&task, ID)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(task)
 }
 
 func deleteTask(w http.ResponseWriter, r *http.Request) {
 	var task Task
-	json.NewDecoder(r.Body).Decode(&task)
-	id := task.ID
+	var id = mux.Vars(r)["id"]
+	ID, err := strconv.Atoi(id)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return
+	}
+	DB.Find(&task, ID)
 	DB.Delete(&task)
-
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, "Task with ID %d deleted", id)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func main() {
@@ -44,10 +61,10 @@ func main() {
 
 	router := mux.NewRouter()
 
-	router.HandleFunc("/api/task", getTask).Methods("GET")
-	router.HandleFunc("/api/task", postTask).Methods("POST")
-	router.HandleFunc("/api/task", putTask).Methods("PUT")
-	router.HandleFunc("/api/task", deleteTask).Methods("DELETE")
+	router.HandleFunc("/api/tasks", getTask).Methods("GET")
+	router.HandleFunc("/api/tasks", postTask).Methods("POST")
+	router.HandleFunc("/api/tasks/{id}", putTask).Methods("PUT")
+	router.HandleFunc("/api/tasks/{id}", deleteTask).Methods("DELETE")
 
 	http.ListenAndServe("localhost:8082", router)
 
