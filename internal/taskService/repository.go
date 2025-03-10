@@ -33,7 +33,7 @@ func (r *taskRepository) GetAllTasks() ([]Task, error) {
 }
 
 func (r *taskRepository) UpdateTaskByID(id uint, task Task) (Task, error) {
-	err := r.db.Model(&task).Where("id = ?", id).Updates(task).Error
+	err := r.db.Model(&task).Where("id = ?", id).Select("task", "is_done").Updates(task).Error
 	r.db.Where("id = ?", id).Find(&task)
 	return task, err
 }
