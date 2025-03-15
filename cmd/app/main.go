@@ -14,7 +14,10 @@ func main() {
 
 	database.InitDB()
 
-	database.DB.AutoMigrate(&taskService.Task{})
+	err := database.DB.AutoMigrate(&taskService.Task{})
+	if err != nil {
+		log.Fatalf("failed to migrate database: %v", err)
+	}
 
 	repo := taskService.NewTaskRepository(database.DB)
 	service := taskService.NewService(repo)
@@ -28,6 +31,6 @@ func main() {
 	strictHandler := tasks.NewStrictHandler(handler, nil)
 	tasks.RegisterHandlers(e, strictHandler)
 	if err := e.Start(":8082"); err != nil {
-		log.Fatal("failed to start with err: %v", err)
+		log.Fatalf("failed to start with err: %v", err)
 	}
 }
