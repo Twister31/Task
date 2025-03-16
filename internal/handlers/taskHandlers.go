@@ -6,11 +6,11 @@ import (
 	"context"
 )
 
-type Handler struct {
+type TaskHandler struct {
 	Service *taskService.TaskService
 }
 
-func (h *Handler) DeleteTasksId(ctx context.Context, request tasks.DeleteTasksIdRequestObject) (tasks.DeleteTasksIdResponseObject, error) {
+func (h *TaskHandler) DeleteTasksId(_ context.Context, request tasks.DeleteTasksIdRequestObject) (tasks.DeleteTasksIdResponseObject, error) {
 
 	err := h.Service.DeleteTaskByID(uint(request.Id))
 	if err != nil {
@@ -22,27 +22,27 @@ func (h *Handler) DeleteTasksId(ctx context.Context, request tasks.DeleteTasksId
 	return &deleteTask, nil
 }
 
-func (h *Handler) PutTasksId(ctx context.Context, request tasks.PutTasksIdRequestObject) (tasks.PutTasksIdResponseObject, error) {
+func (h *TaskHandler) PutTasksId(_ context.Context, request tasks.PutTasksIdRequestObject) (tasks.PutTasksIdResponseObject, error) {
 
 	updateTask := taskService.Task{
 		Task:   *request.Body.Task,
 		IsDone: *request.Body.IsDone,
 	}
 
-	updateTask, err := h.Service.UpdateTaskByID(uint(request.Id), updateTask)
+	updateTaskN, err := h.Service.UpdateTaskByID(uint(request.Id), updateTask)
 	if err != nil {
 		return nil, err
 	}
 
 	response := tasks.PutTasksId200JSONResponse{
-		Id:     &updateTask.ID,
-		Task:   &updateTask.Task,
-		IsDone: &updateTask.IsDone,
+		Id:     &updateTaskN.ID,
+		Task:   &updateTaskN.Task,
+		IsDone: &updateTaskN.IsDone,
 	}
 	return response, nil
 }
 
-func (h *Handler) GetTasks(_ context.Context, _ tasks.GetTasksRequestObject) (tasks.GetTasksResponseObject, error) {
+func (h *TaskHandler) GetTasks(_ context.Context, _ tasks.GetTasksRequestObject) (tasks.GetTasksResponseObject, error) {
 	allTasks, err := h.Service.GetAllTasks()
 	if err != nil {
 		return nil, err
@@ -59,7 +59,7 @@ func (h *Handler) GetTasks(_ context.Context, _ tasks.GetTasksRequestObject) (ta
 	return responce, nil
 }
 
-func (h *Handler) PostTasks(_ context.Context, request tasks.PostTasksRequestObject) (tasks.PostTasksResponseObject, error) {
+func (h *TaskHandler) PostTasks(_ context.Context, request tasks.PostTasksRequestObject) (tasks.PostTasksResponseObject, error) {
 
 	createNewTask := taskService.Task{
 		Task:   *request.Body.Task,
@@ -80,10 +80,10 @@ func (h *Handler) PostTasks(_ context.Context, request tasks.PostTasksRequestObj
 	return response, nil
 }
 
-// Нужна для создания структуры Handler на этапе инициализации приложения
+// Нужна для создания структуры TaskHandler на этапе инициализации приложения
 
-func NewHandler(service *taskService.TaskService) *Handler {
-	return &Handler{
+func NewTaskHandler(service *taskService.TaskService) *TaskHandler {
+	return &TaskHandler{
 		Service: service,
 	}
 }
